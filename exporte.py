@@ -1,33 +1,53 @@
+# export_csv.py
+import csv
 from db import Database
 import csv
 
 class Exporter:
 
-    def exporter_csv(self,date_reservation):
-        donne=Database()
-        sql="""SELECT c.heure_debut, c.heure_fin,
-               g.nom, r.motif, g.responsable
-            FROM reservations r
-            JOIN creneaux c ON r.id_creneaux = c.id_creneaux
-            JOIN groupes g ON r.id_groupe = g.id_groupe
-            WHERE r.date_reservation = %s
-            ORDER BY c.heure_debut
-            """
-        donne.execute(sql,(date_reservation,))
-        resultat=donne.fetchall()
-        donne.close()
+    def exporter(self, date_reservation):
 
-        with open("Jounalier.csv","w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Heure début", "Heure fin", "Groupe", "Motif", "Responsable"])
+        db = Database()
 
-            for row in resultat:
-                writer.writerow([
-                    row["heure_debut"],
-                    row["heure_fin"],
-                    row["nom"],
-                    row["motif"],
-                    row["responsable"]
-                ])
+       
+        query = """
+        SELECT c.heure_debut, c.heure_fin, g.nom AS groupe, r.motif, g.responsable
+        FROM creneaux c
+        LEFT JOIN reservations r
+               ON c.id_creneaux = r.id_creneaux AND r.date_reservation = %s
+        LEFT JOIN groupes g
+               ON r.id_groupe = g.id_groupe
+        ORDER BY c.heure_debut
+        """
+        try:
+            db.execute(query, (date_reservation,))
+            resultat = db.fetchall()
+        except Exception as e:
+            print("Erreur lors de la récupération des données :", e)
+            db.close()
+            return
 
-        print("journalier.csv généré.")
+        db.close()
+
+        if not resultat:
+            print("Aucune réservation pour cette date.")
+            return
+
+        fiche = f"planning_{date_reservation}.csv"
+
+    
+        try:
+            with open(fiche, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["Heure début", "Heure fin", "Groupe", "Motif", "Responsable"])
+                for r in resultat:
+                    writer.writerow([
+                        r["heure_debut"],
+                        r["heure_fin"],
+                        r["groupe"] if r["groupe"] else "[LIBRE]",
+                        r["motif"] if r["motif"] else "",
+                        r["responsable"] if r["responsable"] else ""
+                    ])
+            print(f"Export CSV réalisé avec succès : {fiche}")
+        except Exception as e:
+                print("Erreur lors de l'écriture du fichier CSV :", e)
