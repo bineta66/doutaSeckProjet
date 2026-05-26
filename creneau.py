@@ -13,3 +13,6 @@ class Creneau:
         resultat = db.fetchall()
         db.close()
         return resultat
+
+    def lister_creneaux(self):
+        return self.lister()

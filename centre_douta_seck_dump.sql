@@ -105,6 +105,7 @@ CREATE TABLE `reservations` (
   `id_groupe` int NOT NULL,
   `id_creneaux` int NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_reservation_date_creneaux` (`date_reservation`,`id_creneaux`),
   KEY `id_groupe` (`id_groupe`),
   KEY `id_creneaux` (`id_creneaux`),
   CONSTRAINT `reservations_ibfk_1` FOREIGN KEY (`id_groupe`) REFERENCES `groupes` (`id_groupe`),

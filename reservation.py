@@ -2,18 +2,31 @@ from db import Database
 
 class Reservation:
 
-    def reserver(self, date, motif, id_groupe, id_creneaux):
+    def reserver(self,date,motif,id_groupe,id_creneaux):
+
         db = Database()
-        db.execute("SELECT id FROM reservations WHERE date_reservation=%s AND id_creneaux=%s", (date, id_creneaux))
-        if db.fetchone():
-            db.close()
-            print("Créneau déjà occupé !")
+
+        try:
+
+            db.execute(
+                """
+                INSERT INTO reservations
+                (date_reservation,motif,id_groupe,id_creneaux)
+                VALUES(%s,%s,%s,%s)
+                """,
+                (date,motif,id_groupe,id_creneaux),
+                commit=True
+            )
+
+            print("Réservation validée.")
+            return True
+
+        except Database.IntegrityError:
+            print("Créneau déjà réservé.")
             return False
-        db.execute("INSERT INTO reservations(date_reservation, motif, id_groupe, id_creneaux) VALUES(%s,%s,%s,%s)",
-                   (date, motif, id_groupe, id_creneaux), commit=True)
-        db.close()
-        print("Réservation validée")
-        return True
+
+        finally:
+            db.close()
 
     def planning_journalier(self, date):
         db = Database()

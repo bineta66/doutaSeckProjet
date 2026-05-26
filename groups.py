@@ -13,3 +13,6 @@ class Groupe:
         resultat = db.fetchall()
         db.close()
         return resultat
+
+    def lister_groupes(self):
+        return self.lister()
